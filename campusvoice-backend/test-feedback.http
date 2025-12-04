@@ -1,0 +1,68 @@
+### 1) Créer un étudiant
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "fullName": "Etudiant Test",
+  "email": "etudiant@test.com",
+  "studentId": "M2I123",
+  "password": "123456",
+  "role": "STUDENT",
+  "department": "Informatique"
+}
+
+###
+
+### 2) Créer un professeur
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "fullName": "Prof Test",
+  "email": "prof@test.com",
+  "password": "123456",
+  "role": "TEACHER",
+  "department": "Informatique"
+}
+
+###
+
+### 3) Voir tous les users pour récupérer leurs IDs
+GET http://localhost:8080/api/users
+
+###
+
+### 4) Créer un cours pour le prof (adapter teacherId reçu au dessus)
+POST http://localhost:8080/api/courses
+Content-Type: application/json
+
+{
+  "code": "M2I-DS-01",
+  "title": "Data Science",
+  "department": "Informatique",
+  "teacherId": 2
+}
+
+###
+
+### 5) Voir les cours
+GET http://localhost:8080/api/courses
+
+###
+
+### 6) Créer un feedback lié à l'étudiant (id=1) et au cours (id=1)
+POST http://localhost:8080/api/feedbacks
+Content-Type: application/json
+
+{
+  "content": "Le cours est intéressant mais la salle est trop petite et le wifi ne marche pas bien.",
+  "category": "COURSE",
+  "anonymous": true,
+  "studentId": 1,
+  "courseId": 1
+}
+
+###
+
+### 7) Voir tous les feedbacks
+GET http://localhost:8080/api/feedbacks
