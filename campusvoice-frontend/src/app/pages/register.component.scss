@@ -1,0 +1,41 @@
+.card {
+  background: #020617;
+  border-radius: 0.7rem;
+  padding: 1.5rem;
+  border: 1px solid #1e293b;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+input {
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.4rem;
+  border: 1px solid #4b5563;
+  background: #020617;
+  color: #f9fafb;
+}
+
+button {
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.4rem;
+  border: none;
+  background: #6366f1;
+  color: white;
+  cursor: pointer;
+}
+
+.error {
+  color: #fecaca;
+  font-size: 0.9rem;
+}

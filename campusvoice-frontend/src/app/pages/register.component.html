@@ -1,0 +1,42 @@
+<section class="card">
+  <h2>Créer un compte</h2>
+
+  <form (ngSubmit)="onSubmit()">
+    <label>
+      Nom complet
+      <input [(ngModel)]="fullName" name="fullName" required>
+    </label>
+
+    <label>
+      Email
+      <input type="email" [(ngModel)]="email" name="email" required>
+    </label>
+
+    <label>
+      Mot de passe
+      <input type="password" [(ngModel)]="password" name="password" required>
+    </label>
+
+    <label>
+      Département
+      <input [(ngModel)]="department" name="department">
+    </label>
+
+    <label>
+      Rôle
+      <select [(ngModel)]="role" name="role">
+        <option value="STUDENT">Étudiant</option>
+        <option value="TEACHER">Enseignant</option>
+      </select>
+    </label>
+
+    <label *ngIf="role === 'STUDENT'">
+      CNE / Matricule (optionnel)
+      <input [(ngModel)]="studentId" name="studentId">
+    </label>
+
+    <button type="submit">S’inscrire</button>
+
+    <p *ngIf="error" class="error">{{ error }}</p>
+  </form>
+</section>

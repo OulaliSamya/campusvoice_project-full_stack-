@@ -1,0 +1,52 @@
+.shell {
+  min-height: 100vh;
+  background: #0f172a;
+  color: #f9fafb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 2rem;
+  background: #020617;
+  border-bottom: 1px solid #1e293b;
+}
+
+.logo a {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.nav-links a {
+  color: #cbd5f5;
+  text-decoration: none;
+}
+
+.nav-links a.active {
+  border-bottom: 2px solid #6366f1;
+}
+
+button {
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.3rem;
+  border: none;
+  background: #ef4444;
+  color: white;
+  cursor: pointer;
+}
+
+.page {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
