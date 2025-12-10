@@ -27,26 +27,49 @@ export class AuthService {
 
   private apiUrl = 'http://localhost:8080/api/auth';
 
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  currentUser$ = this.currentUserSubject.asObservable();
+  private currentUserSubject: BehaviorSubject<User | null>;
+  currentUser$: Observable<User | null>;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // 🔹 Initialiser à partir de localStorage
+    const userJson = localStorage.getItem('currentUser');
+    const user = userJson ? JSON.parse(userJson) as User : null;
+    this.currentUserSubject = new BehaviorSubject<User | null>(user);
+    this.currentUser$ = this.currentUserSubject.asObservable();
+  }
 
   login(email: string, password: string): Observable<User> {
     return this.http.post<User>(`${this.apiUrl}/login`, { email, password }).pipe(
-      tap(user => this.currentUserSubject.next(user))
+      tap(user => {
+        // 🔹 stocker dans le BehaviorSubject
+        this.currentUserSubject.next(user);
+        // 🔹 stocker dans localStorage (persistance entre refresh)
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      })
     );
   }
 
   register(data: RegisterRequest): Observable<User> {
+    // ici on peut juste renvoyer la réponse;
+    // on ne connecte pas automatiquement après inscription (à toi de voir)
     return this.http.post<User>(`${this.apiUrl}/register`, data);
   }
 
+  // 🔹 utilisée par tes composants (student-space, admin, etc.)
   getCurrentUser(): User | null {
     return this.currentUserSubject.value;
   }
 
+  // 🔹 si tu veux forcer la relecture depuis localStorage quelque part
+  reloadUserFromStorage(): void {
+    const userJson = localStorage.getItem('currentUser');
+    const user = userJson ? JSON.parse(userJson) as User : null;
+    this.currentUserSubject.next(user);
+  }
+
   logout(): void {
+    // vider localStorage + BehaviorSubject
+    localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
   }
 }

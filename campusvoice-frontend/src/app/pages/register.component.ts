@@ -2,11 +2,11 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService, RegisterRequest } from '../services/auth.service';
+import { AuthService, RegisterRequest, User, UserRole } from '../services/auth.service';
 
 @Component({
-  standalone: true,
   selector: 'app-register',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss']
@@ -17,17 +17,20 @@ export class RegisterComponent {
   email = '';
   password = '';
   department = '';
-  studentId = '';
-  role: 'STUDENT' | 'TEACHER' | 'ADMIN' = 'STUDENT';
+  studentId: string | null = null;
+  role: UserRole = 'STUDENT';
 
   error: string | null = null;
+  loading = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   onSubmit(): void {
-    this.error = null;
 
-    const data: RegisterRequest = {
+    const payload: RegisterRequest = {
       fullName: this.fullName,
       email: this.email,
       password: this.password,
@@ -36,16 +39,18 @@ export class RegisterComponent {
       role: this.role
     };
 
-    console.log('👉 Envoi register', data);
+    this.error = null;
+    this.loading = true;
 
-    this.authService.register(data).subscribe({
-      next: (user) => {
-        console.log('✅ Register OK', user);
+    this.authService.register(payload).subscribe({
+      next: (user: User) => {
+        this.loading = false;
+        console.log('Inscription OK', user);
         this.router.navigate(['/login']);
       },
-      error: (err) => {
-        console.error('❌ Register error', err);
-        this.error = "Erreur lors de la création du compte (email déjà utilisé ?)";
+      error: () => {
+        this.loading = false;
+        this.error = "Erreur lors de l'inscription (email déjà utilisé ?).";
       }
     });
   }
