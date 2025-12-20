@@ -1,0 +1,198 @@
+<section class="student-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <h2 class="app-title">CampusVoice</h2>
+
+    <p class="user-info">
+      Connecté :
+      <br />
+      <strong>{{ user?.fullName || 'Étudiant' }}</strong>
+      <br />
+      <span class="role-label">Rôle : STUDENT</span>
+    </p>
+
+    <nav class="menu">
+      <button
+        type="button"
+        [class.active]="selectedSection === 'courses'"
+        (click)="selectSection('courses')">
+        📚 Mes modules & cours
+      </button>
+
+      <button
+        type="button"
+        [class.active]="selectedSection === 'feedback-course'"
+        (click)="selectSection('feedback-course')">
+        📝 Feedback cours / prof
+      </button>
+
+      <button
+        type="button"
+        [class.active]="selectedSection === 'feedback-infra'"
+        (click)="selectSection('feedback-infra')">
+        🏫 Feedback infrastructure
+      </button>
+
+      <button
+        type="button"
+        [class.active]="selectedSection === 'history'"
+        (click)="selectSection('history')">
+        📄 Historique de mes feedbacks
+      </button>
+    </nav>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="content">
+
+    <!-- Section : Mes modules & cours -->
+    <section *ngIf="selectedSection === 'courses'" class="card">
+      <h2>Mes modules & cours</h2>
+
+      <p *ngIf="courses.length === 0">
+        Aucun cours trouvé pour le moment.
+      </p>
+
+      <div *ngIf="courses.length > 0" class="course-list">
+        <div class="course-item" *ngFor="let c of courses">
+          <h3>{{ c.code }} — {{ c.title }}</h3>
+          <p><strong>Département :</strong> {{ c.department }}</p>
+          <p *ngIf="c.teacher">
+            <strong>Enseignant :</strong> {{ c.teacher.fullName }}
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section : Feedback cours / prof -->
+    <section *ngIf="selectedSection === 'feedback-course'" class="card">
+      <h2>Feedback sur un cours / enseignant</h2>
+
+      <form (ngSubmit)="sendCourseFeedback()">
+        <label>
+          Cours concerné
+          <select
+            [(ngModel)]="selectedCourseId"
+            name="selectedCourseId"
+            required>
+            <option [ngValue]="null">-- Sélectionnez un cours --</option>
+            <option *ngFor="let c of courses" [ngValue]="c.id">
+              {{ c.code }} — {{ c.title }}
+              <span *ngIf="c.teacher"> ({{ c.teacher.fullName }})</span>
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Votre feedback
+          <textarea
+            [(ngModel)]="courseFeedbackContent"
+            name="courseFeedbackContent"
+            required
+            placeholder="Ex : Le cours est clair mais la salle est trop petite..."
+          ></textarea>
+        </label>
+
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="courseAnonymous"
+            [(ngModel)]="courseFeedbackAnonymous"
+            name="courseFeedbackAnonymous"
+          />
+          <label for="courseAnonymous">Envoyer en mode anonyme</label>
+        </div>
+
+        <button type="submit" [disabled]="sendingCourse">
+          {{ sendingCourse ? 'Envoi en cours...' : 'Envoyer le feedback cours' }}
+        </button>
+
+        <p *ngIf="courseError" class="error">{{ courseError }}</p>
+        <p *ngIf="courseSuccess" class="success">{{ courseSuccess }}</p>
+      </form>
+    </section>
+
+    <!-- Section : Feedback infrastructure -->
+    <section *ngIf="selectedSection === 'feedback-infra'" class="card">
+      <h2>Feedback infrastructure</h2>
+
+      <form (ngSubmit)="sendInfraFeedback()">
+        <label>
+          Département / zone
+          <select
+            [(ngModel)]="infraDepartment"
+            name="infraDepartment">
+            <option *ngFor="let d of infraDepartments" [value]="d">
+              {{ d }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Type d'infrastructure
+          <select
+            [(ngModel)]="infraType"
+            name="infraType">
+            <option *ngFor="let t of infraTypes" [value]="t">
+              {{ t }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Votre feedback
+          <textarea
+            [(ngModel)]="infraContent"
+            name="infraContent"
+            required
+            placeholder="Ex : La salle de TP 3 n’a pas de Wi-Fi fonctionnel..."
+          ></textarea>
+        </label>
+
+        <div class="checkbox-group">
+          <input
+            type="checkbox"
+            id="infraAnonymous"
+            [(ngModel)]="infraAnonymous"
+            name="infraAnonymous"
+          />
+          <label for="infraAnonymous">Envoyer en mode anonyme</label>
+        </div>
+
+        <button type="submit" [disabled]="sendingInfra">
+          {{ sendingInfra ? 'Envoi en cours...' : 'Envoyer le feedback infra' }}
+        </button>
+
+        <p *ngIf="infraError" class="error">{{ infraError }}</p>
+        <p *ngIf="infraSuccess" class="success">{{ infraSuccess }}</p>
+      </form>
+    </section>
+
+    <!-- Section : Historique des feedbacks -->
+    <section *ngIf="selectedSection === 'history'" class="card">
+      <h2>Historique de mes feedbacks</h2>
+
+      <p *ngIf="feedbackList.length === 0">
+        Vous n’avez pas encore envoyé de feedback.
+      </p>
+
+      <div *ngIf="feedbackList.length > 0" class="feedback-list">
+        <div class="feedback-item" *ngFor="let fb of feedbackList">
+          <div class="feedback-header">
+            <span class="badge">{{ fb.category }}</span>
+            <span class="date">
+              {{ fb.createdAt | date: 'short' }}
+            </span>
+          </div>
+
+          <p>{{ fb.content }}</p>
+
+          <small class="meta">
+            <span *ngIf="fb.anonymous">Envoyé en anonyme</span>
+            <span *ngIf="!fb.anonymous">Envoyé avec votre nom</span>
+          </small>
+        </div>
+      </div>
+    </section>
+  </main>
+</section>

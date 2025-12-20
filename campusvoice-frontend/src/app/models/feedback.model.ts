@@ -1,40 +1,28 @@
-export interface User {
+export type FeedbackCategory = 'COURSE' | 'TEACHER' | 'INFRA';
+
+export interface FeedbackStudentInfo {
   id: number;
   fullName: string;
   email: string;
-  studentId?: string | null;
-  role: 'STUDENT' | 'TEACHER' | 'ADMIN';
-  department?: string;
-  active?: boolean;
-  createdAt?: string;
 }
 
-export interface Course {
+export interface FeedbackCourseInfo {
   id: number;
   code: string;
   title: string;
-  department?: string;
-  teacher?: User;
 }
 
 export interface Feedback {
-  id: number;
+  id?: number;
   content: string;
-  category: 'COURSE' | 'TEACHER' | 'INFRASTRUCTURE' | 'OTHER';
-  createdAt: string;
-  sentimentLabel: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
-  sentimentScore: number;
-  status: string;
-  topics?: string | null;
+  category: FeedbackCategory;
+  createdAt?: string;
+  sentimentLabel?: string;
+  sentimentScore?: number;
+  status?: string;
+  topics?: string;
   anonymous: boolean;
-  student?: User | null;
-  course?: Course | null;
-}
 
-export interface CreateFeedbackRequest {
-  content: string;
-  category: 'COURSE' | 'TEACHER' | 'INFRASTRUCTURE' | 'OTHER';
-  anonymous: boolean;
-  studentId?: number | null;
-  courseId?: number | null;
+  student?: FeedbackStudentInfo | null;
+  course?: FeedbackCourseInfo | null;
 }
