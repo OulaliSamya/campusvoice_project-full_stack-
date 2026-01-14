@@ -1,16 +1,48 @@
-<section>
-  <h1>Bienvenue sur CampusVoice</h1>
-  <p>
-    CampusVoice est une application de gestion des feedbacks étudiants.
-    Les étudiants peuvent partager leurs avis sur les cours, les enseignants
-    et l’infrastructure. Les enseignants et l’administration peuvent analyser
-    ces feedbacks pour améliorer la qualité de la formation.
-  </p>
+<!-- src/app/pages/home.component.html -->
+<div class="full-page">
+  <div class="header-section">
+    <h1>
+      Bienvenue sur<br>
+      <span class="brand">CampusVoice</span>
+    </h1>
+    <div class="subtitle-underline"></div>
 
-  <p>Pour continuer :</p>
+    <div class="intro-card">
+      <p>
+        <strong>CampusVoice</strong> est une plateforme de gestion des feedbacks étudiants. 
+        Les étudiants peuvent partager leurs avis sur les cours, les enseignants et l'infrastructure. 
+        Les enseignants et l'administration peuvent analyser ces feedbacks pour améliorer la qualité de la formation.
+      </p>
+    </div>
 
-  <ul>
-    <li><a routerLink="/register">Créer un compte</a></li>
-    <li><a routerLink="/login">Se connecter</a></li>
-  </ul>
-</section>
+    <div class="cta-section">
+      <p>Pour continuer :</p>
+      <div class="cta-buttons">
+        <button class="btn-primary" *ngIf="!showOptions" (click)="toggleOptions()">
+          Se connecter
+        </button>
+        
+        <div class="options-container" *ngIf="showOptions">
+          <p class="options-title">Choisissez votre profil :</p>
+          <a routerLink="/login" class="btn-secondary-small">
+            Se connecter en tant qu'étudiant
+          </a>
+          <a routerLink="/login" class="btn-secondary-small">
+            Se connecter en tant qu'enseignant
+          </a>
+          <a routerLink="/login" class="btn-secondary-small">
+            Se connecter en tant qu'administrateur
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="image-section">
+    <img src="images/hero.png" alt="CampusVoice - Plateforme de feedbacks" />
+  </div>
+</div>
+
+<footer class="footer">
+  <p>© 2026 CampusVoice — Accès réservé aux membres de l'institution.</p>
+</footer>

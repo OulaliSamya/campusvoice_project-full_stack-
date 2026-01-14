@@ -1,0 +1,240 @@
+<!-- src/app/pages/admin-feedbacks.component.html -->
+<div class="feedbacks-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des <span class="highlight">Feedbacks</span></h1>
+      <p class="subtitle">Analysez et gérez tous les retours étudiants</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>{{ totalFeedbacks }} feedbacks</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-container">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        placeholder="Rechercher par contenu, cours ou enseignant..."
+        class="search-input"
+      />
+      <button *ngIf="searchTerm" (click)="searchTerm=''; onSearch()" class="clear-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        Catégorie
+      </label>
+      <select 
+        [(ngModel)]="filterCategory"
+        (change)="onFilterChange()"
+        class="filter-select"
+      >
+        <option value="">Toutes les catégories</option>
+        <option value="positive">Positif</option>
+        <option value="neutral">Neutre</option>
+        <option value="negative">Négatif</option>
+      </select>
+    </div>
+
+    <button (click)="loadFeedbacks()" class="refresh-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- Results Info -->
+  <div class="results-info" *ngIf="filteredFeedbacks.length !== totalFeedbacks">
+    <p>
+      <strong>{{ filteredFeedbacks.length }}</strong> résultat(s) sur {{ totalFeedbacks }} feedbacks
+    </p>
+  </div>
+
+  <!-- Feedbacks List -->
+  <div class="feedbacks-grid">
+    <div 
+      *ngFor="let fb of filteredFeedbacks" 
+      class="feedback-card"
+      [class.positive]="fb.category === 'positive'"
+      [class.neutral]="fb.category === 'neutral'"
+      [class.negative]="fb.category === 'negative'"
+    >
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="student-info">
+          <div class="avatar">
+            {{ (fb.student?.fullName || 'A')[0].toUpperCase() }}
+          </div>
+          <div class="info-details">
+            <h3 class="student-name">{{ fb.student?.fullName || 'Anonyme' }}</h3>
+            <p class="feedback-date">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              {{ fb.createdAt | date:'dd/MM/yyyy à HH:mm' }}
+            </p>
+          </div>
+        </div>
+        <span class="category-badge" [attr.data-category]="fb.category">
+          {{ getCategoryLabel(fb.category) }}
+        </span>
+      </div>
+
+      <!-- Card Content -->
+      <div class="card-content">
+        <div class="content-section">
+          <h4 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Contenu du feedback
+          </h4>
+          <p class="feedback-text">{{ fb.content }}</p>
+        </div>
+
+        <div class="meta-info">
+          <div class="meta-item" *ngIf="fb.course">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            <span><strong>Cours:</strong> {{ fb.course.title }}</span>
+          </div>
+          <div class="meta-item" *ngIf="fb.teacher">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span><strong>Enseignant:</strong> {{ fb.teacher.fullName }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Actions -->
+      <div class="card-actions">
+        <button (click)="viewDetails(fb)" class="btn-action btn-view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Détails
+        </button>
+        <button (click)="deleteFeedback(fb.id)" class="btn-action btn-delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Supprimer
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredFeedbacks.length === 0" class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <h3>Aucun feedback trouvé</h3>
+      <p>Essayez de modifier vos critères de recherche</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Details -->
+<div *ngIf="selectedFeedback" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Détails du Feedback</h2>
+      <button (click)="closeModal()" class="close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-section">
+        <div class="detail-header">
+          <div class="avatar-large">
+            {{ (selectedFeedback.student?.fullName || 'A')[0].toUpperCase() }}
+          </div>
+          <div>
+            <h3>{{ selectedFeedback.student?.fullName || 'Étudiant Anonyme' }}</h3>
+            <p class="detail-date">{{ selectedFeedback.createdAt | date:'dd MMMM yyyy à HH:mm' }}</p>
+          </div>
+          <span class="category-badge-large" [attr.data-category]="selectedFeedback.category">
+            {{ getCategoryLabel(selectedFeedback.category) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h4 class="detail-title">Contenu</h4>
+        <p class="detail-content">{{ selectedFeedback.content }}</p>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-section">
+          <h4 class="detail-title">Cours</h4>
+          <p class="detail-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            {{ selectedFeedback.course?.title || 'Non spécifié' }}
+          </p>
+        </div>
+
+        <div class="detail-section">
+          <h4 class="detail-title">Enseignant</h4>
+          <p class="detail-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            {{ selectedFeedback.teacher?.fullName || 'Non spécifié' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button (click)="closeModal()" class="btn-modal btn-secondary">
+        Fermer
+      </button>
+      <button (click)="deleteFeedback(selectedFeedback.id); closeModal()" class="btn-modal btn-danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Supprimer
+      </button>
+    </div>
+  </div>
+</div>

@@ -5,27 +5,26 @@
     </div>
 
     <nav class="nav-links">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <!-- ✅ Accueil : redirige vers la bonne page selon le rôle -->
+      <a [routerLink]="getHomeRoute()" routerLinkActive="active">
         Accueil
       </a>
 
       <a *ngIf="!currentUser" routerLink="/login" routerLinkActive="active">
-        Login
+        Se connecter
       </a>
-      <a *ngIf="!currentUser" routerLink="/register" routerLinkActive="active">
-        Register
-      </a>
+      <!-- ✅ Register supprimé -->
 
       <span *ngIf="currentUser">
         Connecté : {{ currentUser.fullName }} ({{ currentUser.role }})
       </span>
       <button *ngIf="currentUser" (click)="logout()">
-        Logout
+        Déconnexion
       </button>
     </nav>
   </header>
 
-  <main class="page">
+  <main>
     <router-outlet></router-outlet>
   </main>
 </div>

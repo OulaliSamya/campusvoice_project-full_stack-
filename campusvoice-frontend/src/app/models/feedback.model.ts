@@ -1,3 +1,4 @@
+// src/app/models/feedback.model.ts
 export type FeedbackCategory = 'COURSE' | 'TEACHER' | 'INFRA';
 
 export interface FeedbackStudentInfo {
@@ -17,6 +18,7 @@ export interface Feedback {
   content: string;
   category: FeedbackCategory;
   createdAt?: string;
+  updatedAt?: string; // ✅ Ajouté ici
   sentimentLabel?: string;
   sentimentScore?: number;
   status?: string;

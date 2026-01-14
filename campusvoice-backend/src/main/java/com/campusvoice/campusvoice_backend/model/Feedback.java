@@ -10,7 +10,7 @@ public class Feedback {
     public enum Category {
         COURSE,
         TEACHER,
-        INFRASTRUCTURE,
+        INFRA,
         OTHER
     }
 
@@ -40,6 +40,9 @@ public class Feedback {
     private boolean isAnonymous;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
     private SentimentLabel sentimentLabel;
@@ -97,4 +100,7 @@ public class Feedback {
 
     public Course getCourse() { return course; }
     public void setCourse(Course course) { this.course = course; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

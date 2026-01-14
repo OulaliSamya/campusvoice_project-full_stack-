@@ -1,0 +1,337 @@
+/* src/app/pages/admin-layout.component.scss */
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+  position: relative;
+}
+
+// Bouton toggle de la sidebar
+.sidebar-toggle {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  svg {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.6);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.open {
+    svg {
+      transform: rotate(90deg);
+    }
+  }
+
+  @media (min-width: 1025px) {
+    left: 20px;
+  }
+
+  @media (max-width: 1024px) {
+    left: 16px;
+    top: 16px;
+    width: 44px;
+    height: 44px;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+}
+
+// Overlay pour fermer la sidebar sur mobile
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  @media (max-width: 1024px) {
+    display: block;
+    pointer-events: none;
+
+    &.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+.sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #1a1f35 0%, #2d3654 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Desktop: réduit à 70px quand fermée
+  @media (min-width: 1025px) {
+    transform: translateX(0);
+
+    &:not(.open) {
+      width: 70px;
+
+      .sidebar-text {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .logo-section {
+        padding: 24px 12px;
+
+        .logo-icon {
+          margin: 0 auto;
+        }
+      }
+
+      .nav-item,
+      .logout-btn {
+        justify-content: center;
+        padding: 14px 12px;
+      }
+    }
+  }
+
+  // Mobile/Tablette: glisse hors de l'écran quand fermée
+  @media (max-width: 1024px) {
+    &:not(.open) {
+      transform: translateX(-100%);
+    }
+  }
+}
+
+.logo-section {
+  padding: 32px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  flex-shrink: 0;
+  transition: padding 0.3s ease;
+
+  .logo-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    transition: margin 0.3s ease;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin: 0 0 8px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .role-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #a5b4fc;
+    margin: 0;
+  }
+}
+
+.sidebar-text {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+}
+
+.nav-menu {
+  flex: 1;
+  padding: 24px 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5);
+    border-radius: 10px;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.7);
+    }
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    color: #cbd5e1;
+    text-decoration: none;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    position: relative;
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      transform: translateX(4px);
+    }
+
+    &.active {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 60%;
+        background: white;
+        border-radius: 0 4px 4px 0;
+      }
+    }
+  }
+}
+
+.sidebar-footer {
+  padding: 24px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+
+  .logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 1rem;
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fff;
+      border-color: #ef4444;
+      transform: translateX(4px);
+    }
+  }
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  padding: 32px;
+  padding-top: 80px; // Espace pour le bouton toggle
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  // Desktop: s'adapte à la largeur de la sidebar
+  @media (min-width: 1025px) {
+    .sidebar:not(.open) ~ & {
+      margin-left: 70px;
+    }
+  }
+
+  // Mobile/Tablette: pleine largeur
+  @media (max-width: 1024px) {
+    margin-left: 0;
+    padding: 72px 20px 20px;
+  }
+}
+
+// Animation pour les textes de la sidebar
+@media (min-width: 1025px) {
+  .sidebar.open .sidebar-text {
+    animation: fadeInText 0.3s ease 0.2s both;
+  }
+
+  @keyframes fadeInText {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}

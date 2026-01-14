@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService, User } from '../services/auth.service';
 import { Course } from '../models/course.model';
 import { CourseService } from '../services/course.service';
+import { DocumentService } from '../services/document.service';
 
 import {
   Feedback,
@@ -54,7 +55,7 @@ export class StudentDashboardComponent implements OnInit {
   infraSuccess: string | null = null;
   sendingInfra = false;
 
-  // liste de départements & types (simple pour le moment)
+  // liste de départements & types
   infraDepartments: string[] = [
     'Informatique',
     'Mathématiques',
@@ -77,6 +78,7 @@ export class StudentDashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private courseService: CourseService,
+    private documentService: DocumentService,
     private feedbackService: FeedbackService
   ) {}
 
@@ -91,10 +93,39 @@ export class StudentDashboardComponent implements OnInit {
   loadCourses(): void {
     this.courseService.getAll().subscribe({
       next: (list: Course[]) => {
-        this.courses = list;
+        if (this.user?.classe) {
+          const userClassNormalized = this.user.classe.trim().toLowerCase();
+          this.courses = list.filter(course =>
+            course.allowedClasses?.some(cls =>
+              cls?.trim().toLowerCase() === userClassNormalized
+            )
+          );
+        } else {
+          this.courses = list;
+        }
+
+        this.courses.forEach(course => {
+          if (course.id) {
+            this.loadCourseDocuments(course.id);
+          }
+        });
       },
       error: err => {
         console.error('Erreur lors du chargement des cours', err);
+      }
+    });
+  }
+
+  loadCourseDocuments(courseId: number): void {
+    this.documentService.getByCourseId(courseId).subscribe({
+      next: (docs) => {
+        const course = this.courses.find(c => c.id === courseId);
+        if (course) {
+          course.documents = docs;
+        }
+      },
+      error: err => {
+        console.error('Erreur lors du chargement des documents', err);
       }
     });
   }
@@ -115,7 +146,6 @@ export class StudentDashboardComponent implements OnInit {
   selectSection(section: StudentSection): void {
     this.selectedSection = section;
 
-    // on pourrait, plus tard, recharger les données selon la section
     if (section === 'history') {
       this.loadStudentFeedbacks();
     }
@@ -159,8 +189,17 @@ export class StudentDashboardComponent implements OnInit {
       },
       error: err => {
         this.sendingCourse = false;
-        console.error(err);
-        this.courseError = 'Erreur lors de l’envoi du feedback.';
+        
+        if (typeof err.error === 'string' && err.error.includes('inapproprié')) {
+          this.courseError = 'Veuillez utiliser un langage respectueux.';
+        } 
+        else if (err.status === 400) {
+          this.courseError = 'Contenu non autorisé. Veuillez reformuler votre feedback.';
+        }
+        else {
+          console.error(err);
+          this.courseError = 'Erreur lors de l’envoi du feedback.';
+        }
       }
     });
   }
@@ -202,8 +241,73 @@ export class StudentDashboardComponent implements OnInit {
       },
       error: err => {
         this.sendingInfra = false;
-        console.error(err);
-        this.infraError = 'Erreur lors de l’envoi du feedback.';
+        
+        if (typeof err.error === 'string' && err.error.includes('inapproprié')) {
+          this.infraError = 'Veuillez utiliser un langage respectueux.';
+        } 
+        else if (err.status === 400) {
+          this.infraError = 'Contenu non autorisé. Veuillez reformuler votre feedback.';
+        }
+        else {
+          console.error(err);
+          this.infraError = 'Erreur lors de l’envoi du feedback.';
+        }
+      }
+    });
+  }
+
+  // -------------------- Suppression de feedback --------------------
+
+  deleteFeedback(id: number): void {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce feedback ?')) {
+      return;
+    }
+
+    this.feedbackService.deleteFeedback(id).subscribe({
+      next: () => {
+        this.feedbackList = this.feedbackList.filter(fb => fb.id !== id);
+      },
+      error: err => {
+        console.error('Erreur lors de la suppression', err);
+        alert('Impossible de supprimer ce feedback.');
+      }
+    });
+  }
+
+  // -------------------- Modification de feedback --------------------
+
+  editingFeedbackId: number | null = null;
+  editingContent = '';
+
+  startEditing(feedback: Feedback): void {
+    this.editingFeedbackId = feedback.id!; // ✅ Force la non-nullité
+    this.editingContent = feedback.content;
+  }
+
+  cancelEditing(): void {
+    this.editingFeedbackId = null;
+    this.editingContent = '';
+  }
+
+  saveEdit(feedbackId: number): void {
+    if (this.editingContent.trim().length < 10) {
+      alert('Le feedback doit contenir au moins 10 caractères.');
+      return;
+    }
+
+    this.feedbackService.updateFeedback(feedbackId, { content: this.editingContent }).subscribe({
+      next: () => {
+        // Mettre à jour la liste
+        const index = this.feedbackList.findIndex(fb => fb.id === feedbackId);
+        if (index !== -1) {
+          this.feedbackList[index].content = this.editingContent;
+          this.feedbackList[index].updatedAt = new Date().toISOString();
+        }
+        this.cancelEditing();
+      },
+      error: err => {
+        console.error('Erreur lors de la modification', err);
+        alert('Impossible de modifier ce feedback.');
       }
     });
   }

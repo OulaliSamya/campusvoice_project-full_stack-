@@ -6,5 +6,6 @@ public record RegisterRequest(
         String password,
         String department,
         String studentId,
+        String classe,
         String role   // "STUDENT", "TEACHER" ou "ADMIN"
 ) {}

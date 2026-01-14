@@ -1,15 +1,13 @@
 // src/app/models/course.model.ts
+import { Document } from './document.model';
+
 export interface Course {
-  id: number;
+  id?: number;
   code: string;
   title: string;
   department: string;
-
-  
-  // on affichera simplement le nom complet du prof si présent
-  teacher?: {
-    id: number;
-    fullName: string;
-    email: string;
-  } | null;
+  teacherId: number | null;
+  teacherName?: string;
+  allowedClasses?: string[];
+  documents?: Document[]; // ✅ Ajouté
 }

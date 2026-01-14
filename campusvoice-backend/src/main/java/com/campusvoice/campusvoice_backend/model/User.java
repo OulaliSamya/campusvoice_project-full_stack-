@@ -1,3 +1,4 @@
+// src/main/java/com/campusvoice/campusvoice_backend/model/User.java
 package com.campusvoice.campusvoice_backend.model;
 
 import jakarta.persistence.*;
@@ -5,21 +6,19 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "email")
+    @UniqueConstraint(columnNames = "email")
 })
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // ✅ Généré automatiquement — jamais saisi manuellement
 
     @Column(nullable = false)
     private String fullName;
 
     @Column(nullable = false, unique = true)
     private String email;
-
-    private String studentId;
 
     @Column(nullable = false)
     private String password;
@@ -28,11 +27,17 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
+    // --- Champs pour ÉTUDIANTS ---
+    private String studentId; // Numéro étudiant
+    private String classe;     // ✅ Nouveau : Classe / Niveau (ex: "L3 Informatique")
+
+    // --- Champs pour ENSEIGNANTS / ADMIN ---
     private String department;
 
     private boolean active = true;
 
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now(); // ✅ Initialisé automatiquement
 
     // --- Getters & Setters ---
 
@@ -60,14 +65,6 @@ public class User {
         this.email = email;
     }
 
-    public String getStudentId() {
-        return studentId;
-    }
-
-    public void setStudentId(String studentId) {
-        this.studentId = studentId;
-    }
-
     public String getPassword() {
         return password;
     }
@@ -82,6 +79,22 @@ public class User {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public String getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(String studentId) {
+        this.studentId = studentId;
+    }
+
+    public String getClasse() {
+        return classe;
+    }
+
+    public void setClasse(String classe) {
+        this.classe = classe;
     }
 
     public String getDepartment() {
@@ -103,8 +116,9 @@ public class User {
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-
+    
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
 }

@@ -1,79 +1,95 @@
+// src/main/java/com/campusvoice/campusvoice_backend/service/SentimentAnalysisService.java
 package com.campusvoice.campusvoice_backend.service;
 
 import com.campusvoice.campusvoice_backend.model.Feedback;
+import okhttp3.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.io.IOException;
 
 @Service
 public class SentimentAnalysisService {
 
-    // Mots simples en français, tu pourras les améliorer
-    private static final Set<String> POSITIVE_WORDS = Set.of(
-            "bien", "excellent", "super", "clair", "claire", "utile",
-            "intéressant", "interessant", "motivant", "parfait", "top"
+    private static final String SENTIMENT_SERVICE_URL = "http://localhost:5000/analyze";
+    private final OkHttpClient client = new OkHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // Thèmes inchangés
+    private static final java.util.Map<String, String> TOPIC_WORDS = java.util.Map.ofEntries(
+        java.util.Map.entry("explication", "PEDAGOGY"),
+        java.util.Map.entry("expliquer", "PEDAGOGY"),
+        java.util.Map.entry("exemples", "PEDAGOGY"),
+        java.util.Map.entry("exemple", "PEDAGOGY"),
+        java.util.Map.entry("salle", "INFRA"),
+        java.util.Map.entry("wifi", "INFRA"),
+        java.util.Map.entry("projecteur", "INFRA"),
+        java.util.Map.entry("tableau", "INFRA"),
+        java.util.Map.entry("ordinateur", "INFRA"),
+        java.util.Map.entry("horaire", "ORGANIZATION"),
+        java.util.Map.entry("planning", "ORGANIZATION"),
+        java.util.Map.entry("retard", "ORGANIZATION"),
+        java.util.Map.entry("organisation", "ORGANIZATION"),
+        java.util.Map.entry("examen", "EVALUATION"),
+        java.util.Map.entry("controle", "EVALUATION"),
+        java.util.Map.entry("note", "EVALUATION"),
+        java.util.Map.entry("notation", "EVALUATION")
     );
-
-    private static final Set<String> NEGATIVE_WORDS = Set.of(
-            "nul", "mauvais", "horrible", "incompréhensible", "incomprehensible",
-            "fatigant", "fatiguant", "ennuyant", "chiant", "mediocre"
-    );
-
-    // Thèmes / topics
-    private static final Map<String, String> TOPIC_WORDS = Map.ofEntries(
-            Map.entry("explication", "PEDAGOGY"),
-            Map.entry("expliquer", "PEDAGOGY"),
-            Map.entry("exemples", "PEDAGOGY"),
-            Map.entry("exemple", "PEDAGOGY"),
-
-            Map.entry("salle", "INFRA"),
-            Map.entry("wifi", "INFRA"),
-            Map.entry("projecteur", "INFRA"),
-            Map.entry("tableau", "INFRA"),
-            Map.entry("ordinateur", "INFRA"),
-
-            Map.entry("horaire", "ORGANIZATION"),
-            Map.entry("planning", "ORGANIZATION"),
-            Map.entry("retard", "ORGANIZATION"),
-            Map.entry("organisation", "ORGANIZATION"),
-
-            Map.entry("examen", "EVALUATION"),
-            Map.entry("controle", "EVALUATION"),
-            Map.entry("note", "EVALUATION"),
-            Map.entry("notation", "EVALUATION")
-    );
-
-    // Nettoyage & découpage du texte
-    private List<String> tokenize(String text) {
-        if (text == null) return List.of();
-        String cleaned = text
-                .toLowerCase()
-                .replaceAll("[^a-zàâçéèêëîïôûùüÿñæœ ]", " "); // remplace ponctuation par espace
-        return Arrays.stream(cleaned.split("\\s+"))
-                .filter(w -> !w.isEmpty())
-                .toList();
-    }
-
-    public int computeScore(String content) {
-        List<String> words = tokenize(content);
-        int score = 0;
-        for (String w : words) {
-            if (POSITIVE_WORDS.contains(w)) score++;
-            if (NEGATIVE_WORDS.contains(w)) score--;
-        }
-        return score;
-    }
 
     public Feedback.SentimentLabel detectSentiment(String content) {
-        int score = computeScore(content);
-        if (score > 0) return Feedback.SentimentLabel.POSITIVE;
-        if (score < 0) return Feedback.SentimentLabel.NEGATIVE;
-        return Feedback.SentimentLabel.NEUTRAL;
+        try {
+            MediaType JSON = MediaType.get("application/json; charset=utf-8");
+            String json = "{\"text\": \"" + escapeJson(content) + "\"}";
+            RequestBody body = RequestBody.create(json, JSON);
+
+            Request request = new Request.Builder()
+                    .url(SENTIMENT_SERVICE_URL)
+                    .post(body)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            
+            // ✅ Gestion des contenus inappropriés
+            if (response.code() == 400) {
+                String errorBody = response.body().string();
+                System.out.println("Contenu inapproprié : " + errorBody);
+                throw new RuntimeException("Contenu inapproprié détecté. Veuillez utiliser un langage respectueux.");
+            }
+            
+            if (!response.isSuccessful()) {
+                System.err.println("Erreur microservice: " + response.code());
+                return Feedback.SentimentLabel.NEUTRAL;
+            }
+
+            String responseBody = response.body().string();
+            JsonNode root = objectMapper.readTree(responseBody);
+            String sentiment = root.get("sentiment").asText();
+
+            switch (sentiment.toUpperCase()) {
+                case "POSITIVE":
+                    return Feedback.SentimentLabel.POSITIVE;
+                case "NEGATIVE":
+                    return Feedback.SentimentLabel.NEGATIVE;
+                default:
+                    return Feedback.SentimentLabel.NEUTRAL;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            // ✅ Si c'est un contenu inapproprié, lance une RuntimeException
+            if (e.getMessage() != null && e.getMessage().contains("inapproprié")) {
+                throw new RuntimeException("Contenu inapproprié détecté", e);
+            }
+            // ✅ Sinon, retourne NEUTRAL
+            return Feedback.SentimentLabel.NEUTRAL;
+        }
     }
 
     public String detectTopics(String content) {
-        List<String> words = tokenize(content);
-        Set<String> topics = new LinkedHashSet<>();
+        if (content == null) return null;
+        String cleaned = content.toLowerCase().replaceAll("[^a-zàâçéèêëîïôûùüÿñæœ ]", " ");
+        String[] words = cleaned.split("\\s+");
+        java.util.Set<String> topics = new java.util.LinkedHashSet<>();
 
         for (String w : words) {
             String topic = TOPIC_WORDS.get(w);
@@ -82,10 +98,19 @@ public class SentimentAnalysisService {
             }
         }
 
-        if (topics.isEmpty()) {
-            return null; // aucun topic détecté
-        }
-        // On renvoie une chaîne du style "PEDAGOGY;INFRA"
+        if (topics.isEmpty()) return null;
         return String.join(";", topics);
+    }
+
+    private String escapeJson(String input) {
+        if (input == null) return "";
+        return input.replace("\"", "\\\"")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
+    }
+
+    public int computeScore(String content) {
+        return 0;
     }
 }

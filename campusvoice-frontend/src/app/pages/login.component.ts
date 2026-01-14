@@ -1,48 +1,57 @@
+// src/app/pages/login.component.ts
 import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService, User } from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
+  standalone: true,
+  imports: [ReactiveFormsModule, CommonModule]
 })
 export class LoginComponent {
-
-  email = '';
-  password = '';
-
-  error: string | null = null;
-  loading = false;
+  loginForm: FormGroup;
+  isLoading = false;
+  loginError: string | null = null;
 
   constructor(
+    private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) {
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required]
+    });
+  }
 
-  onSubmit(): void {
-    this.error = null;
-    this.loading = true;
+  onLogin(): void {
+    if (this.loginForm.invalid) return;
 
-    this.authService.login(this.email, this.password).subscribe({
-      next: (user: User) => {
-        this.loading = false;
+    this.isLoading = true;
+    this.loginError = null;
+    const { email, password } = this.loginForm.value;
 
-        if (user.role === 'ADMIN') {
-          this.router.navigate(['/admin']);
-        } else if (user.role === 'TEACHER') {
-          this.router.navigate(['/teacher']);
-        } else {
+    this.authService.login(email, password).subscribe({
+      next: () => {
+        this.isLoading = false;
+        const user = this.authService.getCurrentUser();
+        if (user?.role === 'STUDENT') {
           this.router.navigate(['/student']);
+        } else if (user?.role === 'TEACHER') {
+          this.router.navigate(['/teacher']);
+        } else if (user?.role === 'ADMIN') {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/']);
         }
       },
-      error: () => {
-        this.loading = false;
-        this.error = 'Email ou mot de passe incorrect.';
+      error: err => {
+        this.isLoading = false;
+        this.loginError = 'Email ou mot de passe incorrect.';
       }
     });
   }

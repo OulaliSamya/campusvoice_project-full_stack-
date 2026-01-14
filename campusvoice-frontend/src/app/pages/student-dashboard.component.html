@@ -57,8 +57,27 @@
         <div class="course-item" *ngFor="let c of courses">
           <h3>{{ c.code }} — {{ c.title }}</h3>
           <p><strong>Département :</strong> {{ c.department }}</p>
-          <p *ngIf="c.teacher">
-            <strong>Enseignant :</strong> {{ c.teacher.fullName }}
+          <p *ngIf="c.teacherName">
+            <strong>Enseignant :</strong> {{ c.teacherName }}
+          </p>
+
+          <!-- ✅ Section documents -->
+          <div *ngIf="c.documents && c.documents.length > 0" class="documents-section">
+            <h4>📚 Documents du cours</h4>
+            <ul class="document-list">
+              <li *ngFor="let doc of c.documents">
+                <a 
+                  [href]="'http://localhost:8080/api/documents/download/' + doc.fileName" 
+                  target="_blank"
+                  class="document-link">
+                  {{ doc.title }}
+                </a>
+                <small class="upload-date">({{ doc.uploadDate | date:'short' }})</small>
+              </li>
+            </ul>
+          </div>
+          <p *ngIf="!c.documents || c.documents.length === 0" class="no-docs">
+            Aucun document disponible pour ce cours.
           </p>
         </div>
       </div>
@@ -78,7 +97,7 @@
             <option [ngValue]="null">-- Sélectionnez un cours --</option>
             <option *ngFor="let c of courses" [ngValue]="c.id">
               {{ c.code }} — {{ c.title }}
-              <span *ngIf="c.teacher"> ({{ c.teacher.fullName }})</span>
+              <span *ngIf="c.teacherName"> ({{ c.teacherName }})</span>
             </option>
           </select>
         </label>
@@ -178,19 +197,49 @@
 
       <div *ngIf="feedbackList.length > 0" class="feedback-list">
         <div class="feedback-item" *ngFor="let fb of feedbackList">
-          <div class="feedback-header">
-            <span class="badge">{{ fb.category }}</span>
-            <span class="date">
-              {{ fb.createdAt | date: 'short' }}
-            </span>
+          <!-- Mode édition -->
+          <div *ngIf="editingFeedbackId === fb.id" class="edit-mode">
+            <textarea
+              [(ngModel)]="editingContent"
+              placeholder="Modifiez votre feedback"
+              rows="3"></textarea>
+            <div class="edit-actions">
+              <button type="button" (click)="saveEdit(fb.id!)">✅ Enregistrer</button>
+              <button type="button" (click)="cancelEditing()">❌ Annuler</button>
+            </div>
           </div>
 
-          <p>{{ fb.content }}</p>
+          <!-- Mode lecture -->
+          <div *ngIf="editingFeedbackId !== fb.id">
+            <div class="feedback-header">
+              <span class="badge">{{ fb.category }}</span>
+              <span class="date">
+                {{ fb.createdAt | date: 'short' }}
+                <span *ngIf="fb.updatedAt"> (modifié le {{ fb.updatedAt | date: 'short' }})</span>
+              </span>
+              <div class="action-buttons">
+                <button 
+                  type="button" 
+                  class="edit-btn"
+                  (click)="startEditing(fb)">
+                  ✏️
+                </button>
+                <button 
+                  type="button" 
+                  class="delete-btn"
+                  (click)="deleteFeedback(fb.id!)">
+                  🗑️
+                </button>
+              </div>
+            </div>
 
-          <small class="meta">
-            <span *ngIf="fb.anonymous">Envoyé en anonyme</span>
-            <span *ngIf="!fb.anonymous">Envoyé avec votre nom</span>
-          </small>
+            <p>{{ fb.content }}</p>
+
+            <small class="meta">
+              <span *ngIf="fb.anonymous">Envoyé en anonyme</span>
+              <span *ngIf="!fb.anonymous">Envoyé avec votre nom</span>
+            </small>
+          </div>
         </div>
       </div>
     </section>
