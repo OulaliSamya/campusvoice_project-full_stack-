@@ -1,0 +1,339 @@
+<!-- src/app/pages/admin-courses.component.html -->
+<div class="courses-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestion des <span class="highlight">Cours</span></h1>
+      <p class="subtitle">Gérez les cours et leurs classes autorisées</p>
+    </div>
+    <div class="header-actions">
+      <div class="stat-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <span>{{ totalCourses }} cours</span>
+      </div>
+      <button (click)="openAddModal()" class="btn-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Ajouter un cours
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-container">
+    <!-- Search Box -->
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        placeholder="Rechercher par code, titre ou enseignant..."
+        class="search-input"
+      />
+      <button *ngIf="searchTerm" (click)="searchTerm=''; onSearch()" class="clear-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Filter Select -->
+    <select 
+      [(ngModel)]="filterDepartment"
+      (change)="onFilterChange()"
+      class="filter-select"
+    >
+      <option value="">Tous les départements</option>
+      <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+    </select>
+
+    <!-- Refresh Button -->
+    <button (click)="loadCourses()" class="refresh-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- Results Info -->
+  <div class="results-info" *ngIf="filteredCourses.length !== totalCourses">
+    <p>
+      <strong>{{ filteredCourses.length }}</strong> résultat(s) sur {{ totalCourses }} cours
+    </p>
+  </div>
+
+  <!-- Courses Grid -->
+  <div class="courses-grid">
+    <div 
+      *ngFor="let course of filteredCourses" 
+      class="course-card"
+    >
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="course-info">
+          <div class="course-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+          </div>
+          <div class="info-details">
+            <h3 class="course-title">{{ course.code }} — {{ course.title }}</h3>
+            <p class="course-teacher">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              {{ getTeacherName(course) }}
+            </p>
+          </div>
+        </div>
+        <span class="department-badge">
+          {{ course.department }}
+        </span>
+      </div>
+
+      <!-- Card Content - Classes -->
+      <div class="card-content">
+        <div class="classes-section">
+          <h4 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Classes autorisées
+          </h4>
+          <div class="class-tags" *ngIf="course.allowedClasses && course.allowedClasses.length > 0">
+            <span *ngFor="let cls of course.allowedClasses" class="class-tag">
+              {{ cls }}
+            </span>
+          </div>
+          <p class="no-classes" *ngIf="!course.allowedClasses || course.allowedClasses.length === 0">
+            Aucune classe autorisée
+          </p>
+        </div>
+      </div>
+
+      <!-- Card Actions -->
+      <div class="card-actions">
+        <button (click)="viewDetails(course)" class="btn-action btn-view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Gérer
+        </button>
+        <button (click)="deleteCourse(course.id)" class="btn-action btn-delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Supprimer
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredCourses.length === 0" class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <h3>Aucun cours trouvé</h3>
+      <p>Essayez de modifier vos critères de recherche</p>
+    </div>
+  </div>
+</div>
+
+<!-- Add Course Modal -->
+<div *ngIf="showAddModal" class="modal-overlay" (click)="closeAddModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Ajouter un cours</h2>
+      <button (click)="closeAddModal()" class="close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form (ngSubmit)="createCourse()" #courseForm="ngForm">
+        <div class="form-group">
+          <label>Code du cours</label>
+          <input 
+            [(ngModel)]="newCourse.code" 
+            name="code" 
+            required 
+            placeholder="Ex: INF-301"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Titre</label>
+          <input 
+            [(ngModel)]="newCourse.title" 
+            name="title" 
+            required 
+            placeholder="Ex: Développement Web"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Département</label>
+          <input 
+            [(ngModel)]="newCourse.department" 
+            name="department" 
+            required 
+            placeholder="Ex: Informatique"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Enseignant</label>
+          <select [(ngModel)]="newCourse.teacherId" name="teacherId" required class="form-input">
+            <option [ngValue]="null">-- Sélectionnez un enseignant --</option>
+            <option *ngFor="let teacher of teachers" [ngValue]="teacher.id">
+              {{ teacher.fullName }}
+            </option>
+          </select>
+        </div>
+
+        <div *ngIf="courseError" class="alert alert-error">{{ courseError }}</div>
+        <div *ngIf="courseSuccess" class="alert alert-success">{{ courseSuccess }}</div>
+
+        <div class="modal-footer">
+          <button type="button" (click)="closeAddModal()" class="btn-modal btn-secondary">
+            Annuler
+          </button>
+          <button type="submit" class="btn-modal btn-primary" [disabled]="!courseForm.valid">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Créer le cours
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Course Details Modal -->
+<div *ngIf="selectedCourse" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Gestion du cours</h2>
+      <button (click)="closeModal()" class="close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Course Info -->
+      <div class="detail-section">
+        <div class="detail-header">
+          <div class="course-icon-large">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3>{{ selectedCourse.code }} — {{ selectedCourse.title }}</h3>
+            <p class="detail-teacher">{{ getTeacherName(selectedCourse) }}</p>
+          </div>
+          <span class="department-badge-large">
+            {{ selectedCourse.department }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Classes Management -->
+      <div class="detail-section">
+        <h4 class="detail-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Classes autorisées
+        </h4>
+
+        <!-- Add Class Form -->
+        <div class="add-class-form">
+          <input 
+            type="text" 
+            [(ngModel)]="newClassName"
+            placeholder="Ex: L3 Informatique" 
+            (keyup.enter)="addClassToCourse(selectedCourse.id!, newClassName)"
+            class="class-input" 
+          />
+          <button 
+            (click)="addClassToCourse(selectedCourse.id!, newClassName)" 
+            class="btn-add-class"
+            [disabled]="!newClassName.trim()"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Ajouter
+          </button>
+        </div>
+
+        <!-- Classes List -->
+        <div class="class-tags-list" *ngIf="selectedCourse.allowedClasses && selectedCourse.allowedClasses.length > 0">
+          <span *ngFor="let cls of selectedCourse.allowedClasses" class="class-tag-large">
+            {{ cls }}
+            <button (click)="removeClassFromCourse(selectedCourse.id!, cls)" class="remove-class-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </span>
+        </div>
+
+        <p class="no-classes-detail" *ngIf="!selectedCourse.allowedClasses || selectedCourse.allowedClasses.length === 0">
+          Aucune classe autorisée pour ce cours
+        </p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button (click)="closeModal()" class="btn-modal btn-secondary">
+        Fermer
+      </button>
+      <button (click)="deleteCourse(selectedCourse.id); closeModal()" class="btn-modal btn-danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Supprimer le cours
+      </button>
+    </div>
+  </div>
+</div>

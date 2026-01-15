@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: campusvoice-db
+    environment:
+      MYSQL_DATABASE: campusvoice
+      MYSQL_USER: campus
+      MYSQL_PASSWORD: campus
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  sentiment-service:
+    build:
+      context: ./sentiment-service
+      dockerfile: Dockerfile
+    container_name: campusvoice-sentiment
+    ports:
+      - "5000:5000"
+    restart: always
+
+  backend:
+    build:
+      context: ./campusvoice-backend
+      dockerfile: Dockerfile
+    container_name: campusvoice-backend
+    depends_on:
+      - db
+      - sentiment-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/campusvoice?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: campus
+      SPRING_DATASOURCE_PASSWORD: campus
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SENTIMENT_SERVICE_URL: http://sentiment-service:5000
+    ports:
+      - "8081:8080"
+
+  frontend:
+    build:
+      context: ./campusvoice-frontend
+      dockerfile: Dockerfile
+    container_name: campusvoice-frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+volumes:
+  db_data:

@@ -1,17 +1,30 @@
-<!-- src/app/pages/admin-feedbacks.component.html -->
+<!-- src/app/pages/teacher-feedbacks.component.html -->
 <div class="feedbacks-page">
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <h1>Gestion des <span class="highlight">Feedbacks</span></h1>
-      <p class="subtitle">Analysez et gérez tous les retours étudiants</p>
+      <h1>Feedbacks <span class="highlight">Reçus</span></h1>
+      <p class="subtitle">Consultez les retours de vos étudiants sur vos cours</p>
     </div>
     <div class="header-stats">
-      <div class="stat-badge">
+      <div class="stat-badge positive">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
         </svg>
-        <span>{{ totalFeedbacks }} feedbacks</span>
+        <span>{{ positiveFeedbacks }}</span>
+      </div>
+      <div class="stat-badge neutral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <span>{{ neutralFeedbacks }}</span>
+      </div>
+      <div class="stat-badge negative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+        </svg>
+        <span>{{ negativeFeedbacks }}</span>
       </div>
     </div>
   </div>
@@ -28,7 +41,7 @@
         type="text" 
         [(ngModel)]="searchTerm"
         (input)="onSearch()"
-        placeholder="Rechercher par contenu, cours ou enseignant..."
+        placeholder="Rechercher par contenu ou cours..."
         class="search-input"
       />
       <button *ngIf="searchTerm" (click)="searchTerm=''; onSearch()" class="clear-btn">
@@ -39,20 +52,20 @@
       </button>
     </div>
 
-    <!-- Filter Select (directly) -->
+    <!-- Filter Select -->
     <select 
       [(ngModel)]="filterSentiment"
       (change)="onFilterChange()"
       class="filter-select"
     >
-      <option value="">Toutes les catégories</option>
+      <option value="">Tous les sentiments</option>
       <option value="POSITIVE">Positif</option>
       <option value="NEUTRAL">Neutre</option>
       <option value="NEGATIVE">Négatif</option>
     </select>
 
     <!-- Refresh Button -->
-    <button (click)="loadFeedbacks()" class="refresh-btn">
+    <button (click)="loadCoursesAndFeedbacks()" class="refresh-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="23 4 23 10 17 10"></polyline>
         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -68,8 +81,13 @@
     </p>
   </div>
 
-  <!-- Feedbacks List -->
-  <div class="feedbacks-grid">
+  <!-- Loading State -->
+  <div *ngIf="loadingFeedbacks" class="loading-state">
+    <p>Chargement des feedbacks...</p>
+  </div>
+
+  <!-- Feedbacks Grid -->
+  <div class="feedbacks-grid" *ngIf="!loadingFeedbacks">
     <div 
       *ngFor="let fb of filteredFeedbacks" 
       class="feedback-card"
@@ -79,12 +97,21 @@
     >
       <!-- Card Header -->
       <div class="card-header">
-        <div class="student-info">
-          <div class="avatar">
-            {{ (fb.student?.fullName || 'A')[0].toUpperCase() }}
+        <div class="feedback-info">
+          <div class="feedback-icon">
+            <svg *ngIf="fb.sentimentLabel === 'POSITIVE'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+            </svg>
+            <svg *ngIf="fb.sentimentLabel === 'NEUTRAL'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="8" y1="12" x2="16" y2="12"></line>
+            </svg>
+            <svg *ngIf="fb.sentimentLabel === 'NEGATIVE'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>
+            </svg>
           </div>
           <div class="info-details">
-            <h3 class="student-name">{{ fb.student?.fullName || 'Anonyme' }}</h3>
+            <h3 class="student-name">{{ fb.student?.fullName || 'Étudiant' }}</h3>
             <p class="feedback-date">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -94,7 +121,7 @@
             </p>
           </div>
         </div>
-        <span class="category-badge" [attr.data-category]="fb.sentimentLabel">
+        <span class="category-badge">
           {{ getSentimentLabel(fb.sentimentLabel) }}
         </span>
       </div>
@@ -119,12 +146,14 @@
             </svg>
             <span><strong>Cours:</strong> {{ fb.course.title }}</span>
           </div>
-          <div class="meta-item" *ngIf="fb.teacher">
+          <div class="meta-item" *ngIf="fb.anonymous">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            <span><strong>Enseignant:</strong> {{ fb.teacher.fullName }}</span>
+            <span><strong>Anonyme</strong></span>
           </div>
         </div>
       </div>
@@ -151,16 +180,15 @@
     <!-- Empty State -->
     <div *ngIf="filteredFeedbacks.length === 0" class="empty-state">
       <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"></circle>
-        <path d="m21 21-4.35-4.35"></path>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
       </svg>
       <h3>Aucun feedback trouvé</h3>
-      <p>Essayez de modifier vos critères de recherche</p>
+      <p>Vous n'avez reçu aucun feedback pour le moment</p>
     </div>
   </div>
 </div>
 
-<!-- Modal Details -->
+<!-- Feedback Details Modal -->
 <div *ngIf="selectedFeedback" class="modal-overlay" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
@@ -177,13 +205,13 @@
       <div class="detail-section">
         <div class="detail-header">
           <div class="avatar-large">
-            {{ (selectedFeedback.student?.fullName || 'A')[0].toUpperCase() }}
+            {{ (selectedFeedback.student?.fullName || 'E')[0].toUpperCase() }}
           </div>
           <div>
             <h3>{{ selectedFeedback.student?.fullName || 'Étudiant Anonyme' }}</h3>
             <p class="detail-date">{{ selectedFeedback.createdAt | date:'dd MMMM yyyy à HH:mm' }}</p>
           </div>
-          <span class="category-badge-large" [attr.data-category]="selectedFeedback.sentimentLabel">
+          <span class="category-badge-large">
             {{ getSentimentLabel(selectedFeedback.sentimentLabel) }}
           </span>
         </div>
@@ -207,13 +235,15 @@
         </div>
 
         <div class="detail-section">
-          <h4 class="detail-title">Enseignant</h4>
+          <h4 class="detail-title">Anonymat</h4>
           <p class="detail-info">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            {{ selectedFeedback.teacher?.fullName || 'Non spécifié' }}
+            {{ selectedFeedback.anonymous ? 'Anonyme' : 'Identifié' }}
           </p>
         </div>
       </div>

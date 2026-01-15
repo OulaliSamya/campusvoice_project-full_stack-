@@ -11,7 +11,8 @@ import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 interface Feedback {
   id: number;
   content: string;
-  category: 'positive' | 'neutral' | 'negative';
+  category: 'COURSE' | 'TEACHER' | 'INFRA';
+  sentimentLabel: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
   createdAt: string;
   student?: {
     id: number;
@@ -42,7 +43,7 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
   
   // Filtres
   searchTerm = '';
-  filterCategory: '' | 'positive' | 'neutral' | 'negative' = '';
+  filterSentiment: '' | 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' = '';
   
   // Modal
   selectedFeedback: Feedback | null = null;
@@ -78,8 +79,8 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
   private setupSearchDebounce(): void {
     this.searchSubject
       .pipe(
-        debounceTime(300), // Attend 300ms après la dernière frappe
-        distinctUntilChanged(), // Ne déclenche que si la valeur change
+        debounceTime(300),
+        distinctUntilChanged(),
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
@@ -133,14 +134,14 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Déclenché lors du changement de filtre de catégorie
+   * Déclenché lors du changement de filtre de sentiment
    */
   onFilterChange(): void {
     this.applyFilters();
   }
 
   /**
-   * Applique les filtres de recherche et de catégorie
+   * Applique les filtres de recherche et de sentiment
    */
   applyFilters(): void {
     this.filteredFeedbacks = this.allFeedbacks.filter(fb => {
@@ -151,10 +152,10 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
         fb.teacher?.fullName?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         fb.student?.fullName?.toLowerCase().includes(this.searchTerm.toLowerCase());
 
-      // Filtre de catégorie
-      const matchesCategory = !this.filterCategory || fb.category === this.filterCategory;
+      // Filtre de sentiment
+      const matchesSentiment = !this.filterSentiment || fb.sentimentLabel === this.filterSentiment;
 
-      return matchesSearch && matchesCategory;
+      return matchesSearch && matchesSentiment;
     });
   }
 
@@ -163,32 +164,20 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
    */
   resetFilters(): void {
     this.searchTerm = '';
-    this.filterCategory = '';
+    this.filterSentiment = '';
     this.applyFilters();
   }
 
   /**
-   * Retourne le label traduit pour une catégorie
+   * Retourne le label traduit pour un sentiment
    */
-  getCategoryLabel(category: string): string {
+  getSentimentLabel(sentiment: string): string {
     const labels: Record<string, string> = {
-      positive: 'Positif',
-      neutral: 'Neutre',
-      negative: 'Négatif'
+      POSITIVE: 'Positif',
+      NEUTRAL: 'Neutre',
+      NEGATIVE: 'Négatif'
     };
-    return labels[category] || 'Neutre';
-  }
-
-  /**
-   * Retourne la couleur associée à une catégorie
-   */
-  getCategoryColor(category: string): string {
-    const colors: Record<string, string> = {
-      positive: '#10b981',
-      neutral: '#f59e0b',
-      negative: '#ef4444'
-    };
-    return colors[category] || '#6b7280';
+    return labels[sentiment] || 'Inconnu';
   }
 
   /**
@@ -220,12 +209,10 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
     .pipe(takeUntil(this.destroy$))
     .subscribe({
       next: () => {
-        // Retire le feedback de la liste
         this.allFeedbacks = this.allFeedbacks.filter(fb => fb.id !== id);
         this.totalFeedbacks--;
         this.applyFilters();
         
-        // Ferme le modal si c'était le feedback sélectionné
         if (this.selectedFeedback?.id === id) {
           this.closeModal();
         }
@@ -243,7 +230,6 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
    * Affiche un message de succès
    */
   private showSuccessMessage(message: string): void {
-    // Ici vous pouvez intégrer un service de notification (Toastr, etc.)
     alert(message);
   }
 
@@ -251,46 +237,7 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
    * Affiche un message d'erreur
    */
   private showErrorMessage(message: string): void {
-    // Ici vous pouvez intégrer un service de notification (Toastr, etc.)
     alert(message);
-  }
-
-  /**
-   * Exporte les feedbacks filtrés en CSV
-   */
-  exportToCSV(): void {
-    if (this.filteredFeedbacks.length === 0) {
-      this.showErrorMessage('Aucun feedback à exporter');
-      return;
-    }
-
-    const headers = ['ID', 'Date', 'Étudiant', 'Cours', 'Enseignant', 'Catégorie', 'Contenu'];
-    const rows = this.filteredFeedbacks.map(fb => [
-      fb.id,
-      new Date(fb.createdAt).toLocaleDateString('fr-FR'),
-      fb.student?.fullName || 'Anonyme',
-      fb.course?.title || 'N/A',
-      fb.teacher?.fullName || 'N/A',
-      this.getCategoryLabel(fb.category),
-      `"${fb.content.replace(/"/g, '""')}"` // Échappe les guillemets
-    ]);
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `feedbacks_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   }
 
   /**
@@ -298,9 +245,9 @@ export class AdminFeedbacksComponent implements OnInit, OnDestroy {
    */
   getFilteredStats(): { positive: number; neutral: number; negative: number } {
     return {
-      positive: this.filteredFeedbacks.filter(fb => fb.category === 'positive').length,
-      neutral: this.filteredFeedbacks.filter(fb => fb.category === 'neutral').length,
-      negative: this.filteredFeedbacks.filter(fb => fb.category === 'negative').length
+      positive: this.filteredFeedbacks.filter(fb => fb.sentimentLabel === 'POSITIVE').length,
+      neutral: this.filteredFeedbacks.filter(fb => fb.sentimentLabel === 'NEUTRAL').length,
+      negative: this.filteredFeedbacks.filter(fb => fb.sentimentLabel === 'NEGATIVE').length
     };
   }
 }

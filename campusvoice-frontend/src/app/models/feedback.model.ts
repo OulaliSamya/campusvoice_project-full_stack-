@@ -1,5 +1,6 @@
 // src/app/models/feedback.model.ts
 export type FeedbackCategory = 'COURSE' | 'TEACHER' | 'INFRA';
+export type SentimentLabel = 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE'; // ✅ Ajouté
 
 export interface FeedbackStudentInfo {
   id: number;
@@ -18,8 +19,8 @@ export interface Feedback {
   content: string;
   category: FeedbackCategory;
   createdAt?: string;
-  updatedAt?: string; // ✅ Ajouté ici
-  sentimentLabel?: string;
+  updatedAt?: string;
+  sentimentLabel?: SentimentLabel; // ✅ Typé correctement
   sentimentScore?: number;
   status?: string;
   topics?: string;

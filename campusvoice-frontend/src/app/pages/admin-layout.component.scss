@@ -303,6 +303,8 @@
   overflow-y: auto;
   overflow-x: hidden;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 100%;
+  box-sizing: border-box;
 
   // Desktop: s'adapte à la largeur de la sidebar
   @media (min-width: 1025px) {

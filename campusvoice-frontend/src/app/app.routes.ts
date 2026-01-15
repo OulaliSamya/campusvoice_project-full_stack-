@@ -3,15 +3,29 @@ import { inject } from '@angular/core';
 import { Router, Routes, CanActivateFn } from '@angular/router';
 import { AuthService } from './services/auth.service';
 
-// Import des composants
+// Import des composants publics
 import { HomeComponent } from './pages/home.component';
 import { LoginComponent } from './pages/login.component';
-import { StudentDashboardComponent } from './pages/student-dashboard.component';
-import { TeacherDashboardComponent } from './pages/teacher-dashboard.component';
-import { AdminDashboardComponent } from './pages/admin-dashboard.component';
+
+// Import des composants admin
 import { AdminLayoutComponent } from './pages/admin-layout.component';
-import { AdminManagementComponent } from './pages/admin-management.component';
+import { AdminDashboardComponent } from './pages/admin-dashboard.component';
 import { AdminFeedbacksComponent } from './pages/admin-feedbacks.component';
+import { AdminManagementComponent } from './pages/admin-management.component';
+import { AdminUsersComponent } from './pages/admin-users.component';
+import { AdminCoursesComponent } from './pages/admin-courses.component';
+
+// Import des composants enseignant
+import { TeacherLayoutComponent } from './pages/teacher-layout.component';
+import { TeacherCoursesComponent } from './pages/teacher-courses.component';
+import { TeacherFeedbacksComponent } from './pages/teacher-feedbacks.component';
+
+// Import des composants étudiant
+import { StudentLayoutComponent } from './pages/student-layout.component';
+import { StudentCoursesComponent } from './pages/student-courses.component';
+import { StudentFeedbackCourseComponent } from './pages/student-feedback-course.component';
+import { StudentFeedbackInfraComponent } from './pages/student-feedback-infra.component';
+import { StudentHistoryComponent } from './pages/student-history.component';
 
 /**
  * Guard pour vérifier l'authentification
@@ -46,11 +60,11 @@ const adminGuard: CanActivateFn = () => {
   
   // Rediriger vers le dashboard approprié selon le rôle
   if (user.role === 'STUDENT') {
-    return router.parseUrl('/student');
+    return router.parseUrl('/student/courses');
   }
   
   if (user.role === 'TEACHER') {
-    return router.parseUrl('/teacher');
+    return router.parseUrl('/teacher/courses');
   }
   
   return router.parseUrl('/login');
@@ -79,7 +93,7 @@ const studentGuard: CanActivateFn = () => {
   }
   
   if (user.role === 'TEACHER') {
-    return router.parseUrl('/teacher');
+    return router.parseUrl('/teacher/courses');
   }
   
   return router.parseUrl('/login');
@@ -108,7 +122,7 @@ const teacherGuard: CanActivateFn = () => {
   }
   
   if (user.role === 'STUDENT') {
-    return router.parseUrl('/student');
+    return router.parseUrl('/student/courses');
   }
   
   return router.parseUrl('/login');
@@ -118,33 +132,82 @@ const teacherGuard: CanActivateFn = () => {
  * Routes de l'application
  */
 export const routes: Routes = [
-  // Page d'accueil publique
+  // ============================================
+  // ROUTES PUBLIQUES
+  // ============================================
+  
   { 
     path: '', 
     component: HomeComponent 
   },
   
-  // Page de connexion
   { 
     path: 'login', 
     component: LoginComponent 
   },
   
-  // Dashboard étudiant (protégé)
+  // ============================================
+  // ESPACE ÉTUDIANT (protégé)
+  // ============================================
+  
   { 
-    path: 'student', 
-    component: StudentDashboardComponent, 
-    canActivate: [studentGuard] 
+    path: 'student',
+    component: StudentLayoutComponent,
+    canActivate: [studentGuard],
+    children: [
+      { 
+        path: '', 
+        redirectTo: 'courses', 
+        pathMatch: 'full' 
+      },
+      { 
+        path: 'courses', 
+        component: StudentCoursesComponent 
+      },
+      { 
+        path: 'feedback-course', 
+        component: StudentFeedbackCourseComponent 
+      },
+      { 
+        path: 'feedback-infra', 
+        component: StudentFeedbackInfraComponent 
+      },
+      { 
+        path: 'history', 
+        component: StudentHistoryComponent 
+      }
+    ]
   },
   
-  // Dashboard enseignant (protégé)
+  // ============================================
+  // ESPACE ENSEIGNANT (protégé)
+  // ============================================
+  
   { 
-    path: 'teacher', 
-    component: TeacherDashboardComponent, 
-    canActivate: [teacherGuard] 
+    path: 'teacher',
+    component: TeacherLayoutComponent,
+    canActivate: [teacherGuard],
+    children: [
+      { 
+        path: '', 
+        redirectTo: 'courses', 
+        pathMatch: 'full' 
+      },
+      { 
+        path: 'courses', 
+        component: TeacherCoursesComponent 
+      },
+      { 
+        path: 'feedbacks', 
+        component: TeacherFeedbacksComponent 
+      }
+    ] 
   },
   
-  // Section admin (protégée avec layout)
+  // ============================================
+  // ESPACE ADMINISTRATEUR (protégé)
+  // ============================================
+  
   { 
     path: 'admin',
     component: AdminLayoutComponent,
@@ -164,13 +227,24 @@ export const routes: Routes = [
         component: AdminFeedbacksComponent 
       },
       { 
+        path: 'courses', 
+        component: AdminCoursesComponent 
+      },
+      { 
+        path: 'users', 
+        component: AdminUsersComponent 
+      },
+      { 
         path: 'management', 
         component: AdminManagementComponent 
       }
     ] 
   },
   
-  // Redirection pour toutes les routes non trouvées
+  // ============================================
+  // ROUTE PAR DÉFAUT (404)
+  // ============================================
+  
   { 
     path: '**', 
     redirectTo: '' 

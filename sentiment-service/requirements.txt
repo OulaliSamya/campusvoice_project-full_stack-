@@ -1,0 +1,4 @@
+flask
+flask-cors
+textblob
+googletrans==4.0.0-rc1

@@ -1,0 +1,334 @@
+<!-- src/app/pages/teacher-courses.component.html -->
+<div class="courses-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Mes <span class="highlight">Cours</span></h1>
+      <p class="subtitle">Gérez vos cours et partagez des documents avec vos étudiants</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <span>{{ totalCourses }} cours</span>
+      </div>
+      <div class="stat-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+          <polyline points="13 2 13 9 20 9"></polyline>
+        </svg>
+        <span>{{ totalDocuments }} documents</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Section -->
+  <div class="filters-container">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        placeholder="Rechercher par code, titre ou département..."
+        class="search-input"
+      />
+      <button *ngIf="searchTerm" (click)="searchTerm=''; onSearch()" class="clear-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <button (click)="loadCourses()" class="refresh-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      Actualiser
+    </button>
+  </div>
+
+  <!-- Results Info -->
+  <div class="results-info" *ngIf="filteredCourses.length !== totalCourses">
+    <p>
+      <strong>{{ filteredCourses.length }}</strong> résultat(s) sur {{ totalCourses }} cours
+    </p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loadingCourses" class="loading-state">
+    <p>Chargement de vos cours...</p>
+  </div>
+
+  <!-- Courses Grid -->
+  <div class="courses-grid" *ngIf="!loadingCourses">
+    <div 
+      *ngFor="let course of filteredCourses" 
+      class="course-card"
+    >
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="course-info">
+          <div class="course-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+          </div>
+          <div class="info-details">
+            <h3 class="course-title">{{ course.code }} — {{ course.title }}</h3>
+            <p class="course-department">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              {{ course.department }}
+            </p>
+          </div>
+        </div>
+        <span class="documents-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+            <polyline points="13 2 13 9 20 9"></polyline>
+          </svg>
+          {{ course.documents?.length || 0 }} doc(s)
+        </span>
+      </div>
+
+      <!-- Card Content - Documents Preview -->
+      <div class="card-content">
+        <div class="documents-preview" *ngIf="course.documents && course.documents.length > 0">
+          <h4 class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+              <polyline points="13 2 13 9 20 9"></polyline>
+            </svg>
+            Documents récents
+          </h4>
+          <div class="document-list-preview">
+            <div *ngFor="let doc of course.documents.slice(0, 3)" class="document-item-preview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+              </svg>
+              <span>{{ doc.title }}</span>
+            </div>
+            <p *ngIf="course.documents.length > 3" class="more-docs">
+              +{{ course.documents.length - 3 }} autre(s)
+            </p>
+          </div>
+        </div>
+        <p class="no-documents" *ngIf="!course.documents || course.documents.length === 0">
+          Aucun document disponible
+        </p>
+      </div>
+
+      <!-- Card Actions -->
+      <div class="card-actions">
+        <button (click)="openUploadModal(course)" class="btn-action btn-upload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Ajouter un document
+        </button>
+        <button (click)="viewDocuments(course)" class="btn-action btn-view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Gérer les documents
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredCourses.length === 0" class="empty-state">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+      </svg>
+      <h3>Aucun cours trouvé</h3>
+      <p>Vous n'avez aucun cours attribué pour le moment</p>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Document Modal -->
+<div *ngIf="showUploadModal" class="modal-overlay" (click)="closeUploadModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Ajouter un document</h2>
+      <button (click)="closeUploadModal()" class="close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="course-info-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <div>
+          <strong>{{ selectedCourse?.code }}</strong>
+          <p>{{ selectedCourse?.title }}</p>
+        </div>
+      </div>
+
+      <form (ngSubmit)="uploadDocument()" #uploadForm="ngForm">
+        <div class="form-group">
+          <label>Titre du document</label>
+          <input 
+            [(ngModel)]="docTitle" 
+            name="docTitle" 
+            required 
+            placeholder="Ex: Support TP1"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Fichier</label>
+          <div class="file-input-wrapper">
+            <input 
+              type="file" 
+              (change)="onFileSelected($event)" 
+              required 
+              class="file-input"
+              id="fileInput"
+            />
+            <label for="fileInput" class="file-input-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              {{ selectedFile ? selectedFile.name : 'Choisir un fichier' }}
+            </label>
+          </div>
+          <small class="file-hint">PDF, DOC, PPT, etc. (max 10 MB)</small>
+        </div>
+
+        <div *ngIf="uploadError" class="alert alert-error">{{ uploadError }}</div>
+        <div *ngIf="uploadSuccess" class="alert alert-success">{{ uploadSuccess }}</div>
+
+        <div class="modal-footer">
+          <button type="button" (click)="closeUploadModal()" class="btn-modal btn-secondary">
+            Annuler
+          </button>
+          <button 
+            type="submit" 
+            class="btn-modal btn-primary" 
+            [disabled]="!uploadForm.valid || !selectedFile || uploading"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            {{ uploading ? 'Envoi...' : 'Uploader' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- View Documents Modal -->
+<div *ngIf="viewingCourse" class="modal-overlay" (click)="closeViewModal()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Documents du cours</h2>
+      <button (click)="closeViewModal()" class="close-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="course-info-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+        <div>
+          <strong>{{ viewingCourse.code }} — {{ viewingCourse.title }}</strong>
+          <p>{{ viewingCourse.department }}</p>
+        </div>
+      </div>
+
+      <div class="documents-list" *ngIf="viewingCourse.documents && viewingCourse.documents.length > 0">
+        <div *ngFor="let doc of viewingCourse.documents" class="document-item">
+          <div class="document-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+              <polyline points="13 2 13 9 20 9"></polyline>
+            </svg>
+          </div>
+          <div class="document-info">
+            <h4>{{ doc.title }}</h4>
+            <p>{{ doc.uploadDate | date:'dd/MM/yyyy à HH:mm' }}</p>
+          </div>
+          <div class="document-actions">
+            <a 
+              [href]="getDocumentUrl(doc.fileName)" 
+              target="_blank"
+              class="btn-doc btn-download"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Télécharger
+            </a>
+            <button 
+              (click)="deleteDocument(doc, viewingCourse)" 
+              class="btn-doc btn-delete"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!viewingCourse.documents || viewingCourse.documents.length === 0" class="no-documents-modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+          <polyline points="13 2 13 9 20 9"></polyline>
+        </svg>
+        <p>Aucun document disponible pour ce cours</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button (click)="closeViewModal()" class="btn-modal btn-secondary">
+        Fermer
+      </button>
+      <button (click)="openUploadModal(viewingCourse); closeViewModal()" class="btn-modal btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Ajouter un document
+      </button>
+    </div>
+  </div>
+</div>
